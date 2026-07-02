@@ -49,6 +49,13 @@ android {
         minSdk = 21
     }
 
+  packaging {
+    // Host apps must also configure jniLibs.useLegacyPackaging = false in their
+    resources {
+      excludes += ['META-INF/versions/9/OSGI-INF/MANIFEST.MF']
+    }
+  }
+
     dependencies {
         implementation("ee.getid:getidlib:4.2.2")
         testImplementation("org.jetbrains.kotlin:kotlin-test")

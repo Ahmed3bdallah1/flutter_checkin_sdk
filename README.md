@@ -36,6 +36,27 @@ maven { url = uri("https://jitpack.io") }
 maven { url = uri("https://cdn.getid.cloud/sdk/android") }
 ```
 
+#### `android/gradle.properties`
+
+The GetID SDK pulls in dependencies (including `bcprov-jdk18on`) that can break Android builds when Jetifier is enabled. Update your **host app** `android/gradle.properties` as follows:
+
+| Property | Recommended value | Why |
+|----------|-------------------|-----|
+| `android.enableJetifier` | `false` | Jetifier fails on `bcprov-jdk18on` (newer Java bytecode) from the GetID SDK. Modern AndroidX projects no longer need Jetifier. |
+| `android.jetifier.ignorelist` | `protobuf-lite,protobuf-javalite,bcprov-jdk18on` | Safeguard if Jetifier is re-enabled: exclude BouncyCastle JARs from transformation. |
+
+**Typical Flutter default:**
+```properties
+android.enableJetifier=true
+android.jetifier.ignorelist=protobuf-lite,protobuf-javalite
+```
+
+**Recommended change when using this plugin:**
+```properties
+android.enableJetifier=false
+android.jetifier.ignorelist=protobuf-lite,protobuf-javalite,bcprov-jdk18on
+```
+
 Add required permissions to your app's `AndroidManifest.xml`:
 
 ```xml
@@ -48,6 +69,21 @@ If your flow uses NFC document reading, also add:
 ```xml
 <uses-permission android:name="android.permission.NFC" />
 <uses-feature android:name="android.hardware.nfc" android:required="false" />
+```
+
+Add the following to your app's `android/app/build.gradle` (or `build.gradle.kts`) to avoid duplicate manifest merge conflicts:
+
+```gradle
+android {
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+        resources {
+            excludes += ['META-INF/versions/9/OSGI-INF/MANIFEST.MF']
+        }
+    }
+}
 ```
 
 ### iOS
@@ -225,6 +261,8 @@ Configure your `API URL`, `SDK key` or `JWT`, and `flow name` in the example UI.
 | `TOKEN_EXPIRED` | Fetch a fresh JWT from your backend |
 | iOS build issues with User Script Sandboxing | Disable **User Script Sandboxing** in Xcode build settings (per Checkin.com docs) |
 | Android dependency resolution fails | Add the GetID Maven CDN and JitPack repositories |
+| Jetifier / `bcprov-jdk18on` build error | Set `android.enableJetifier=false` and add `bcprov-jdk18on` to `android.jetifier.ignorelist` in `gradle.properties` |
+| `mergeDebugJavaResource` / duplicate `META-INF` | Add the `packaging.resources.excludes` block in `android/app/build.gradle` (see Android installation above) |
 
 ## Documentation
 
@@ -235,4 +273,6 @@ Configure your `API URL`, `SDK key` or `JWT`, and `flow name` in the example UI.
 
 ## License
 
-See [LICENSE](LICENSE).
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
+
+Copyright (c) 2026 ahmed abdallah

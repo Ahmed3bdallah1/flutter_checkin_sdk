@@ -1,8 +1,9 @@
 name: flutter_checkin_sdk
-description: Production-ready Flutter plugin wrapping the Checkin.com (GetID) native SDK for Android and iOS.
-version: 0.1.0
+description: Production plugin wrapping the Checkin.com (GetID) native SDK for Android and iOS.
+version: 0.1.2
 homepage: https://dev.checkin.com/docs/getid-native-sdk-1
-repository: https://github.com/checkin/flutter_checkin_sdk
+repository: https://github.com/Ahmed3bdallah1/flutter_checkin_sdk
+license: MIT
 
 environment:
   sdk: ^3.10.0

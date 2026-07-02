@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../utils/json_readers.dart';
+
 /// Error details reported by the native Checkin.com SDK.
 final class VerificationError extends Equatable {
   const VerificationError({
@@ -19,9 +21,9 @@ final class VerificationError extends Equatable {
 
   factory VerificationError.fromJson(Map<dynamic, dynamic> json) {
     return VerificationError(
-      code: json['code'] as String? ?? 'UNKNOWN',
-      message: json['message'] as String? ?? 'An unknown error occurred.',
-      nativeError: json['nativeError'] as String?,
+      code: readJsonString(json['code']) ?? 'UNKNOWN',
+      message: readJsonString(json['message']) ?? 'An unknown error occurred.',
+      nativeError: readJsonString(json['nativeError']),
     );
   }
 

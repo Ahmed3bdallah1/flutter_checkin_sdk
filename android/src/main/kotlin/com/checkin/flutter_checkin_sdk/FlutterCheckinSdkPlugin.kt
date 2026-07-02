@@ -8,10 +8,10 @@ import com.sdk.getidlib.app.common.receivers.BroadcastReceiverListener
 import com.sdk.getidlib.config.GetIDSDK
 import com.sdk.getidlib.model.app.auth.Key
 import com.sdk.getidlib.model.app.auth.Token
+import com.sdk.getidlib.model.app.document.DocumentEnum
+import com.sdk.getidlib.model.app.metadata.Metadata as GetIdMetadata
 import com.sdk.getidlib.model.entity.events.GetIDApplication
 import com.sdk.getidlib.model.entity.events.GetIDError
-import com.sdk.getidlib.model.entity.metadata.Metadata
-import com.sdk.getidlib.model.entity.profile.DocumentEnum
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -163,27 +163,29 @@ class FlutterCheckinSdkPlugin :
         }
     }
 
-    private fun parseMetadata(raw: Map<*, *>?): Metadata? {
+    private fun parseMetadata(raw: Map<*, *>?): GetIdMetadata? {
         if (raw == null) {
             return null
         }
 
-        val externalId = raw["externalId"] as? String
-        val customerId = raw["customerId"] as? String
+        val externalId = when (val value = raw["externalId"]) {
+            is String -> value
+            is Number -> value.toString()
+            else -> null
+        }
         val labels = (raw["labels"] as? Map<*, *>)?.mapNotNull { entry ->
-            val key = entry.key as? String ?: return@mapNotNull null
-            val value = entry.value as? String ?: return@mapNotNull null
+            val key = entry.key?.toString() ?: return@mapNotNull null
+            val value = entry.value?.toString() ?: return@mapNotNull null
             key to value
         }?.toMap()
 
-        if (externalId == null && customerId == null && labels.isNullOrEmpty()) {
+        if (externalId.isNullOrBlank() && labels.isNullOrEmpty()) {
             return null
         }
 
-        return Metadata(
-            externalId = externalId,
-            customerId = customerId,
-            labels = labels,
+        return GetIdMetadata(
+            externalId ?: "",
+            labels ?: emptyMap(),
         )
     }
 
@@ -258,6 +260,8 @@ class FlutterCheckinSdkPlugin :
             GetIDError.INVALID_KEY -> "Invalid SDK key."
             GetIDError.INVALID_TOKEN -> "Invalid JWT. It may have expired."
             GetIDError.FLOW_NOT_FOUND -> "No flow was found with the provided flowName."
+            GetIDError.FAILED_TO_RECEIVE_CONFIGURATION ->
+                "Failed to receive verification configuration from the server."
             GetIDError.UNSUPPORTED_SCHEMA_VERSION -> "The SDK version is outdated."
             GetIDError.CUSTOMER_ID_ALREADY_EXIST -> "An application with this customerId already exists."
             GetIDError.TOKEN_EXPIRED -> "The token has expired."

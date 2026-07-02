@@ -28,4 +28,12 @@ void main() {
     expect(event, isA<VerificationCompleted>());
     expect((event as VerificationCompleted).result.applicationId, 'app-123');
   });
+
+  test('VerificationResult coerces numeric applicationId', () {
+    final result = VerificationResult.fromJson({
+      'applicationId': 12345,
+    });
+
+    expect(result.applicationId, '12345');
+  });
 }

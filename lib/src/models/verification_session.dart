@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../utils/json_readers.dart';
 import 'checkin_auth.dart';
 import 'document_type.dart';
 import 'verification_metadata.dart';
@@ -95,7 +96,7 @@ final class VerificationResult extends Equatable {
 
   factory VerificationResult.fromJson(Map<dynamic, dynamic> json) {
     return VerificationResult(
-      applicationId: json['applicationId'] as String? ?? '',
+      applicationId: readJsonString(json['applicationId']) ?? '',
     );
   }
 

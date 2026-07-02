@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../models/verification_error.dart';
 import '../models/verification_session.dart';
+import '../utils/json_readers.dart';
 
 /// Events emitted by the Checkin.com native SDK during a verification flow.
 ///
@@ -12,7 +13,7 @@ sealed class VerificationEvent extends Equatable {
   const VerificationEvent();
 
   factory VerificationEvent.fromJson(Map<dynamic, dynamic> json) {
-    final type = json['type'] as String?;
+    final type = readJsonString(json['type']);
     return switch (type) {
       'verificationStarted' => const VerificationStarted(),
       'verificationCompleted' => VerificationCompleted(

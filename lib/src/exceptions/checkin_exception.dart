@@ -137,7 +137,10 @@ CheckinException mapNativeErrorToException({
         message: message,
         nativeError: nativeError,
       ),
-    'FAILED_TO_SEND_APPLICATION' || 'failedToSendApplication' =>
+    'FAILED_TO_SEND_APPLICATION' ||
+    'failedToSendApplication' ||
+    'FAILED_TO_RECEIVE_CONFIGURATION' ||
+    'failedToReceiveConfiguration' =>
       NetworkException(
         errorCode: code,
         message: message,
