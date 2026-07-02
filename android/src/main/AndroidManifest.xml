@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.checkin.flutter_checkin_sdk">
+
+    <!--
+      Camera, internet, and storage permissions are required by the host app
+      when using the Checkin.com SDK. See README.md for details.
+
+      NFC is only required when your flow includes NFC document reading:
+    -->
+    <!-- <uses-permission android:name="android.permission.NFC" /> -->
+    <!-- <uses-feature android:name="android.hardware.nfc" android:required="false" /> -->
+</manifest>
