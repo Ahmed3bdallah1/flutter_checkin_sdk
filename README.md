@@ -23,8 +23,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_checkin_sdk:
-    path: ../flutter_checkin_sdk # or pub.dev once published
+  flutter_checkin_sdk: ^0.1.2 # or pub.dev latest published version
 ```
 
 ### Android
@@ -139,6 +138,10 @@ Future<void> runCheckinFlow() async {
     }
   });
 
+  /// apiUrl, flowName, and SDK key are provided by your Checkin.com account
+  /// In production, use JWT authentication instead of the SDK key.
+  /// See the "JWT authentication" section below.
+  /// If you are in the sandbox environment, use the sandbox API URL and flow name.
   await sdk.startVerification(
     apiUrl: 'https://company-name.getid.ee',
     auth: CheckinAuth.sdkKey('YOUR_SDK_KEY'), // use JWT in production
