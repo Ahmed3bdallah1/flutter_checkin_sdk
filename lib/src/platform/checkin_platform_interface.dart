@@ -32,8 +32,6 @@ abstract base class CheckinPlatform extends PlatformInterface {
   Future<void> startVerification(VerificationSession session);
 
   /// Attempts to cancel an in-progress verification flow.
-  ///
-  /// TODO: Not documented in Checkin SDK.
   Future<void> cancel();
 }
 

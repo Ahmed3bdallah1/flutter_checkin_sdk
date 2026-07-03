@@ -19,7 +19,6 @@ class CheckinRepository {
     return _platform.startVerification(session);
   }
 
-  /// TODO: Not documented in Checkin SDK.
   Future<void> cancel() => _platform.cancel();
 
   void _validateSession(VerificationSession session) {

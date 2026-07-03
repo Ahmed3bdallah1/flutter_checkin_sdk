@@ -42,8 +42,9 @@ class FlutterCheckinSdk {
   Future<void> initialize() => _repository.initialize();
 
   /// Starts a Checkin.com verification flow.
-  ///
   /// Maps to `GetIDSDK.startVerificationFlow()` on Android and iOS.
+  /// This method must be called after [initialize] and before any verification events are emitted.
+  /// This method will throw a [CheckinException] if the SDK is not initialized or if the verification flow fails to start.
   Future<void> startVerification({
     required String apiUrl,
     required CheckinAuth auth,
@@ -69,7 +70,8 @@ class FlutterCheckinSdk {
   }
 
   /// Attempts to cancel an in-progress verification flow.
-  ///
   /// TODO: Not documented in Checkin SDK.
+  /// Contacting Checkin.com support for clarification on this method is currently in our process.
+  /// This method is not guaranteed to work on all platforms and may be removed in future versions of this plugin.
   Future<void> cancel() => _repository.cancel();
 }
