@@ -1,3 +1,8 @@
+## 0.1.4
+
+* Register the default method channel via `FlutterCheckinSdk` factory constructor and early platform bootstrap before repository access.
+* Add debug-only diagnostic logging (`logger` package) for initialize, startVerification, and verification events.
+
 ## 0.1.3
 
 * Update GetID SDK to 4.1.3 for Android and 4.1.2 for iOS.

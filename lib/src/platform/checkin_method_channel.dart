@@ -6,6 +6,7 @@ import '../constants.dart';
 import '../events/verification_event.dart';
 import '../exceptions/checkin_exception.dart';
 import '../models/verification_session.dart';
+import '../utils/checkin_logger.dart';
 import 'checkin_platform_interface.dart';
 
 /// Method channel implementation of [CheckinPlatform].
@@ -27,31 +28,51 @@ final class MethodChannelCheckinPlatform extends CheckinPlatform {
   Stream<VerificationEvent> get events {
     return _events ??= _eventChannel
         .receiveBroadcastStream()
-        .map((dynamic event) => VerificationEvent.fromJson(
-              Map<dynamic, dynamic>.from(event as Map),
-            ))
+        .map((dynamic event) {
+          checkinLogger.d('Verification event raw: $event');
+          final parsed = VerificationEvent.fromJson(
+            Map<dynamic, dynamic>.from(event as Map),
+          );
+          checkinLogger.i('Verification event parsed: $parsed');
+          return parsed;
+        })
         .handleError((Object error, StackTrace stackTrace) {
-      throw _mapError(error);
-    });
+          checkinLogger.e('Verification event stream error', error: error);
+          throw _mapError(error);
+        });
   }
 
   @override
   Future<void> initialize() async {
+    checkinLogger.i('Initializing Checkin SDK');
     try {
       await _methodChannel.invokeMethod<void>(CheckinMethods.initialize);
+      checkinLogger.i('Checkin SDK initialized');
     } on PlatformException catch (error) {
+      checkinLogger.e(
+        'Checkin SDK initialization failed',
+        error: error,
+        stackTrace: StackTrace.current,
+      );
       throw _mapPlatformException(error);
     }
   }
 
   @override
   Future<void> startVerification(VerificationSession session) async {
+    checkinLogger.i('Starting verification: ${session.toJson()}');
     try {
       await _methodChannel.invokeMethod<void>(
         CheckinMethods.startVerification,
         session.toJson(),
       );
+      checkinLogger.i('Verification flow requested on native side');
     } on PlatformException catch (error) {
+      checkinLogger.e(
+        'Verification start failed',
+        error: error,
+        stackTrace: StackTrace.current,
+      );
       throw _mapPlatformException(error);
     }
   }

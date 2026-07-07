@@ -28,9 +28,13 @@ export '../models/verification_session.dart';
 /// );
 /// ```
 class FlutterCheckinSdk {
-  FlutterCheckinSdk({CheckinRepository? repository})
-      : _repository = repository ?? CheckinRepository() {
+  FlutterCheckinSdk._(this._repository);
+
+  factory FlutterCheckinSdk({CheckinRepository? repository}) {
     ensureCheckinPlatformRegistered();
+    return FlutterCheckinSdk._(
+      repository ?? CheckinRepository(),
+    );
   }
 
   final CheckinRepository _repository;
