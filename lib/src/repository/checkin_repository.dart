@@ -1,21 +1,32 @@
 import '../events/verification_event.dart';
 import '../exceptions/checkin_exception.dart';
 import '../models/verification_session.dart';
+import '../platform/checkin_platform.dart';
 import '../platform/checkin_platform_interface.dart';
+import '../utils/checkin_logger.dart';
 
 /// Repository layer between the public API and the platform bridge.
 class CheckinRepository {
   CheckinRepository({CheckinPlatform? platform})
-      : _platform = platform ?? CheckinPlatform.instance;
+      : _platformOverride = platform;
 
-  final CheckinPlatform _platform;
+  final CheckinPlatform? _platformOverride;
+
+  CheckinPlatform get _platform {
+    ensureCheckinPlatformRegistered();
+    return _platformOverride ?? CheckinPlatform.instance;
+  }
 
   Stream<VerificationEvent> get events => _platform.events;
 
-  Future<void> initialize() => _platform.initialize();
+  Future<void> initialize() {
+    checkinLogger.i('Repository initialize');
+    return _platform.initialize();
+  }
 
   Future<void> startVerification(VerificationSession session) {
     _validateSession(session);
+    checkinLogger.d('Repository startVerification: ${session.toJson()}');
     return _platform.startVerification(session);
   }
 
