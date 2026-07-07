@@ -11,10 +11,4 @@ void ensureCheckinPlatformRegistered() {
   CheckinPlatform.instance = MethodChannelCheckinPlatform();
   _isRegistered = true;
 }
-
-// Register before any repository reads [CheckinPlatform.instance].
-final bool _checkinPlatformBootstrapped = () {
-  ensureCheckinPlatformRegistered();
-  return true;
-}();
  
