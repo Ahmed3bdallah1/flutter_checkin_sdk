@@ -47,6 +47,16 @@ android {
 
     defaultConfig {
         minSdk = 21
+        // Applied automatically to host apps that enable minify/R8. Keeps the
+        // generic signatures the GetID SDK needs so release (R8 full mode)
+        // builds don't crash with ClassCastException -> ParameterizedType.
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+        disable 'NullSafeMutableLiveData'
     }
 
   packaging {

@@ -7,6 +7,8 @@ Production-ready Flutter plugin for the [Checkin.com (GetID) native SDK](https:/
 - Clean Dart API with repository and platform interface layers
 - `MethodChannel` for commands, `EventChannel` for SDK callbacks
 - Strongly typed models, events, and exceptions
+- Safe platform bootstrap: method channel is registered before repository access
+- Debug-only diagnostic logging (`logger`) for initialize, startVerification, and events
 - Android (Kotlin) and iOS (Swift) implementations
 - Example app with Riverpod state management
 
@@ -15,7 +17,7 @@ Production-ready Flutter plugin for the [Checkin.com (GetID) native SDK](https:/
 | Platform | Minimum version | Native SDK |
 |----------|-----------------|------------|
 | Android  | API 21+         | `ee.getid:getidlib:4.2.2` |
-| iOS      | 16.0+           | `GetID 4.1.3` |
+| iOS      | 13.0+ (plugin) / 16.0+ (GetID SDK) | `GetID 4.1.3` |
 
 ## Installation
 
@@ -23,7 +25,7 @@ Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_checkin_sdk: ^0.1.2 # or pub.dev latest published version
+  flutter_checkin_sdk: ^1.0.0 # or pub.dev latest published version
 ```
 
 ### Android
@@ -85,12 +87,38 @@ android {
 }
 ```
 
+#### Release / R8 (minify) builds
+
+Release builds with R8 full mode (`android.enableR8.fullMode=true`, the Android Gradle Plugin default) can crash the GetID SDK with:
+
+```text
+java.lang.Class cannot be cast to java.lang.reflect.ParameterizedType
+```
+
+R8 strips generic `Signature` attributes that Retrofit/Gson/Moshi reflection needs. This plugin ships `android/consumer-rules.pro` and wires it via `consumerProguardFiles` in `android/build.gradle`, so host apps that enable minify automatically get the keep rules. No extra ProGuard config is required in the app unless you override consumer rules.
+
 ### iOS
 
-The plugin depends on the Checkin.com iOS SDK via CocoaPods:
+The plugin supports both **Swift Package Manager** and **CocoaPods**.
+
+The Flutter plugin package targets **iOS 13.0+**. The Checkin.com GetID native SDK itself requires **iOS 16.0+**, so set your app’s deployment target to 16.0 or higher.
+
+#### Swift Package Manager
+
+With Flutter’s SwiftPM integration enabled, GetID is resolved from [vvorld/getid-ios-sdk](https://github.com/vvorld/getid-ios-sdk) via the plugin’s `Package.swift`. No extra Podfile entry is required when using SPM for this plugin.
+
+#### CocoaPods
+
+GetID is not published on the CocoaPods trunk. Add this line to your app’s `ios/Podfile` (before `flutter_install_all_ios_pods`):
 
 ```ruby
-pod 'GetID', podspec: 'https://cdn.getid.cloud/sdk/ios/4.1.3/GetID.podspec'
+pod 'GetID', :podspec => 'https://cdn.getid.cloud/sdk/ios/4.1.3/GetID.podspec'
+```
+
+Because GetID depends on RecaptchaEnterprise (static binaries), use static framework linkage:
+
+```ruby
+use_frameworks! :linkage => :static
 ```
 
 Add the following to your app's `Info.plist`:
@@ -108,10 +136,16 @@ If your flow includes NFC, also add `NFCReaderUsageDescription`, enable the **Ne
 
 The native SDK does not expose a separate initialize method. The plugin's `initialize()` call prepares the platform channel bridge and event stream.
 
+Creating `FlutterCheckinSdk()` uses a factory constructor that calls `ensureCheckinPlatformRegistered()` **before** the repository reads `CheckinPlatform.instance`. That avoids unbound method-channel / missing-implementation failures when `initialize()` or `startVerification()` runs.
+
 ```dart
 final sdk = FlutterCheckinSdk();
 await sdk.initialize();
 ```
+
+### Debug logging (0.1.4+)
+
+In debug builds, the plugin logs initialize, startVerification, and verification events via the `logger` package (`checkinLogger`). Logging is off in release (`kDebugMode` only). No host-app setup is required.
 
 ## Example usage
 
@@ -193,6 +227,7 @@ The native SDK does **not** return verification results. Use the `applicationId`
 
 | Method / property | Description |
 |-------------------|-------------|
+| `FlutterCheckinSdk()` | Factory: registers the default method channel, then creates the repository |
 | `initialize()` | Prepares the plugin bridge |
 | `startVerification(...)` | Starts `GetIDSDK.startVerificationFlow()` |
 | `cancel()` | **TODO:** Not documented in Checkin SDK |
@@ -258,14 +293,25 @@ Configure your `API URL`, `SDK key` or `JWT`, and `flow name` in the example UI.
 
 | Issue | Suggestion |
 |-------|------------|
+| Init / missing method channel / unbound handler | Use `FlutterCheckinSdk()` (factory) so the platform is registered before repository access; call `initialize()` before `startVerification`. Fixed in **0.1.4**. |
 | `FLOW_NOT_FOUND` / `flowNotFound` | Verify the flow name in your Checkin.com Dashboard |
 | `INVALID_KEY` / `invalidKey` | Use the SDK key, not the API key, in the mobile app |
 | `DENY_PERMISSION` | Add camera permission descriptions and request runtime permission |
 | `TOKEN_EXPIRED` | Fetch a fresh JWT from your backend |
 | iOS build issues with User Script Sandboxing | Disable **User Script Sandboxing** in Xcode build settings (per Checkin.com docs) |
+| CodeSign fails on Simulator (`resource fork, Finder information…`) | Common when the repo lives under iCloud-synced `~/Documents`. The app `Podfile` sets `CODE_SIGNING_ALLOWED=NO` on pod targets and re-signs GetID/Recaptcha. Prefer cloning outside iCloud if issues persist. |
 | Android dependency resolution fails | Add the GetID Maven CDN and JitPack repositories |
 | Jetifier / `bcprov-jdk18on` build error | Set `android.enableJetifier=false` and add `bcprov-jdk18on` to `android.jetifier.ignorelist` in `gradle.properties` |
 | `mergeDebugJavaResource` / duplicate `META-INF` | Add the `packaging.resources.excludes` block in `android/app/build.gradle` (see Android installation above) |
+| Release crash: `Class` cannot be cast to `ParameterizedType` | Caused by R8 full mode stripping generic signatures. Fixed by plugin `consumer-rules.pro` (auto-applied when minify is on). Rebuild the release app after upgrading the plugin. |
+
+## Release notes (1.0.0)
+
+See [CHANGELOG.md](CHANGELOG.md) for the full 1.0.0 list. Highlights:
+
+- **iOS rewrite:** Swift Package source layout, `static_framework`, host Podfile must declare GetID CDN podspec, updated GetID 4.1.3 Swift types (`GetIDAuth`, `GetIDMetadata`, `GetIDAcceptableDocuments`, …).
+- **Android release / R8:** `consumer-rules.pro` via `consumerProguardFiles` fixes minify `ParameterizedType` crash.
+- **Example:** iOS 16.0 + Podfile GetID/Recaptcha codesign workarounds.
 
 ## Documentation
 
